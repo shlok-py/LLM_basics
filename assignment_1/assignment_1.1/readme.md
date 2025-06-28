@@ -23,7 +23,7 @@ Supports both **spaCy** and **NLTK** engines for processing.
 ---
 ## 🏗️ Project Structure
 
-assignment_1/assignment_1.1
+```assignment_1/assignment_1.1
 │
 ├── main.py # Flask application
 ├── processor/
@@ -35,6 +35,7 @@ assignment_1/assignment_1.1
 ├── static/
 │ └── style.css # Optional styles
 └── README.md
+```
 ---
 ## 🛠️ Setup Instructions
 
