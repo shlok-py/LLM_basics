@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NLP Processor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4">🧠 NLP Text Analyzer</h1>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <form id="nlpForm">
+                <div class="mb-3">
+                    <label for="text" class="form-label">Enter Text</label>
+                    <textarea class="form-control" id="text" rows="4" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Choose NLP Engine</label>
+                    <select class="form-select" id="engine">
+                        <option value="spacy" selected>spaCy</option>
+                        <option value="nltk">NLTK</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Analyze</button>
+                <button type="button" class="btn btn-outline-secondary" id="compareBtn">Compare Lemma vs Stem</button>
+
+            </form>
+        </div>
+    </div>
+
+    <div id="result" class="mt-4"></div>
+
+</div>
+
+
+
+<script>
+    document.getElementById("nlpForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const text = document.getElementById("text").value;
+        const engine = document.getElementById("engine").value;
+
+        fetch("/analyze", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({text, engine})
+        })
+        .then(response => response.json())
+        .then(data => {
+            let resultDiv = document.getElementById("result");
+            if (data.error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            } else {
+                let html = `
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5>🔤 Tokens:</h5>
+                            <p>${data.tokens.join(', ')}</p>`;
+
+                if (data.stems) {
+                    html += `<h5>🌱 Stems:</h5><p>${data.stems.join(', ')}</p>`;
+                }
+
+                html += `
+                            <h5>📚 Lemmas:</h5>
+                            <p>${data.lemmas.join(', ')}</p>
+
+                            <h5>🔠 POS Tags:</h5>
+                            <ul>${data.pos_tags.map(p => `<li>${p[0]} → ${p[1]}</li>`).join('')}</ul>
+
+                            <h5>🏷️ Named Entities:</h5>
+                            <ul>${data.named_entities.map(ne => `<li>${ne[0]} → ${ne[1]}</li>`).join('')}</ul>
+                        </div>
+                    </div>`;
+
+                resultDiv.innerHTML = html;
+            }
+        });
+    });
+
+    document.getElementById("compareBtn").addEventListener("click", function () {
+        const text = document.getElementById("text").value;
+        const engine = document.getElementById("engine").value;
+
+        if (!text.trim()) {
+            document.getElementById("result").innerHTML = `<div class="alert alert-warning">Please enter some text.</div>`;
+            return;
+        }
+
+        fetch("/compare", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({text, engine})
+        })
+        .then(res => res.json())
+        .then(data => {
+            let resultDiv = document.getElementById("result");
+
+            if (data.error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            } else {
+                const rows = data.comparison.map(entry => `
+                    <tr>
+                        <td>${entry.word}</td>
+                        <td>${entry.lemma}</td>
+                        <td>${entry.stem}</td>
+                    </tr>
+                `).join('');
+
+                resultDiv.innerHTML = `
+                    <div class="card mt-4 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="mb-3">🆚 Lemmatization vs Stemming</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Word</th>
+                                            <th>Lemmatized</th>
+                                            <th>Stemmed</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

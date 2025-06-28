@@ -1,0 +1,1 @@
+take the data set from kaggle: https://www.kaggle.com/datasets/sunnysai12345/news-summary
